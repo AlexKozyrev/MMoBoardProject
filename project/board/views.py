@@ -1,12 +1,14 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
+from django.db.models import Exists, OuterRef
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
+from django.views.decorators.csrf import csrf_protect
 from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView
 
 from .forms import AdForm
-from .models import Ad, Response
+from .models import Ad, Response, AdCategory, Subscription
 
 
 class HomePageView(ListView):
@@ -26,7 +28,7 @@ class AdDetailView(DetailView):
     context_object_name = 'ad'
 
 
-class ResponseCreateView(LoginRequiredMixin, CreateView):
+class ResponseCreateView(LoginRequiredMixin, CreateView):  # отклики
     raise_exception = True
     model = Response
     template_name = 'response_create.html'
@@ -35,6 +37,8 @@ class ResponseCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.ad_id = self.kwargs['pk']
         form.instance.user_id = self.request.user.id
+        if self.request.user.id == form.instance.ad.user.id:  # проверка что отклик на другого пользователя
+            return redirect('home')
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -43,12 +47,11 @@ class ResponseCreateView(LoginRequiredMixin, CreateView):
 
 # Create your views here.
 
-class AdCreate(PermissionRequiredMixin, CreateView):
+class AdCreate(PermissionRequiredMixin, CreateView):  # объявления
     permission_required = ('board.add_ad',)
     form_class = AdForm
     raise_exception = True
     model = Ad
-    # и новый шаблон, в котором используется форма.
     template_name = 'ad_edit.html'
 
     def form_valid(self, form):
@@ -57,7 +60,7 @@ class AdCreate(PermissionRequiredMixin, CreateView):
 
 
 class AdUpdate(PermissionRequiredMixin, UpdateView):
-    permission_required = ('board.update_ad',)
+    permission_required = ('board.change_ad',)
     form_class = AdForm
     raise_exception = True
     model = Ad
@@ -77,10 +80,9 @@ class AdDelete(PermissionRequiredMixin, DeleteView):
 
 
 @login_required
-def private_cabinet(request):
+def private_cabinet(request):  # личный кабинет
     user = request.user
-    if user.last_name == '' and not user.is_staff:
-        print(user.is_active)
+    if user.last_name == '' and not user.is_staff:  # проверка верификации
         return redirect('/accounts/verify')
     ads = Ad.objects.filter(user=user)
     responses = Response.objects.filter(ad__in=ads)
@@ -111,11 +113,42 @@ def private_cabinet(request):
             if response.ad.user == user:
                 response.accepted = True
                 response.save()
-                # response.delete()
+                # response.delete() #отключено для удобства тестирования
                 return redirect("private_cabinet")
 
     return render(
         request,
         "private_cabinet.html",
         {"responses": responses, "sort_by": sort_by},
+    )
+
+
+@login_required
+@csrf_protect
+def subscriptions(request):  # подписки
+    if request.method == 'POST':
+        category_id = request.POST.get('category_id')
+        category = AdCategory.objects.get(id=category_id)
+        action = request.POST.get('action')
+
+        if action == 'subscribe':
+            Subscription.objects.create(user=request.user, category=category)
+        elif action == 'unsubscribe':
+            Subscription.objects.filter(
+                user=request.user,
+                category=category,
+            ).delete()
+
+    categories_with_subscriptions = AdCategory.objects.annotate(
+        user_subscribed=Exists(
+            Subscription.objects.filter(
+                user=request.user,
+                category=OuterRef('pk'),
+            )
+        )
+    ).order_by('name')
+    return render(
+        request,
+        'subscriptions.html',
+        {'categories': categories_with_subscriptions},
     )

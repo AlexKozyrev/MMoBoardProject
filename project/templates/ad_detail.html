@@ -4,20 +4,15 @@
   <h1>{{ ad.title }}</h1>
   <p>{{ ad.content|safe }}</p>
   <p>[{{ ad.category.name }}]</p>
-   {% if perms.board.change_ad %}
+   {% if perms.board.change_ad and request.user == ad.user %}
     <a href="{% url 'ad_update' ad.id %}">Изменить объявление</a>
     {% endif %}
-  <h2>Ответы:</h2>
+  <h2>Отклики:</h2>
   {% for response in ad.response_set.all %}
     <div class="response">
       <p>{{ response.content }}</p>
     </div>
   {% empty %}
-    <p>Нет ответов.</p>
+    <p>Нет откликов.</p>
   {% endfor %}
-  <form method="post" action="{% url 'response_create' ad.id %}">
-    {% csrf_token %}
-    <textarea name="content" rows="3" cols="40"></textarea><br>
-    <button type="submit">Отправить</button>
-  </form>
 {% endblock %}

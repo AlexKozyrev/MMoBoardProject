@@ -4,7 +4,7 @@ from .models import Ad
 from ckeditor.fields import RichTextField
 
 
-class AdForm(forms.ModelForm):
+class AdForm(forms.ModelForm): # форма редактирования. создания ckeditor
     content = forms.CharField(widget=CKEditorWidget())
 
     class Meta:

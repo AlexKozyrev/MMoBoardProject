@@ -8,7 +8,7 @@ from .forms import SignUpForm, VerifyForm
 from .models import Code
 
 
-class SignUp(CreateView):
+class SignUp(CreateView): # регистрация
     model = User
     form_class = SignUpForm
     success_url = '/accounts/login'
@@ -25,7 +25,7 @@ class SignUp(CreateView):
         return super().form_valid(form)
 
 
-def Verify(request):
+def Verify(request): # верификация
     form = VerifyForm(request.POST or None)
     if form.is_valid():
         code = form.cleaned_data['code']

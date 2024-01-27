@@ -1,7 +1,7 @@
 {% extends "flatpages/default.html" %}
 
 {% block content %}
-  <h1>Личный кабинет</h1>
+  <h1>Личный кабинет {{ request.user.username }}</h1>
   {% if perms.board.add_ad %}
     <a href="{% url 'ad_create' %}">Повесить новое объявление на доску</a>
     {% endif %}
@@ -19,6 +19,7 @@
       <th>Объявление</th>
       <th>Категория</th>
       <th>Время создания поста</th>
+      <th>Никнейм</th>
       <th>Отклик</th>
       <th>Время создания отклика</th>
       <th>Действия</th>
@@ -30,6 +31,7 @@
         </td>
         <td>{{ response.ad.category}}</td>
         <td>{{ response.ad.dateCreation }}</td>
+        <td>{{ response.user.username }}</td>
         <td>{{ response.content }}</td>
         <td>{{ response.dateCreation }}</td>
         {% if response.accepted %}
