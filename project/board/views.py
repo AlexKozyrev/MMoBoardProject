@@ -79,6 +79,9 @@ class AdDelete(PermissionRequiredMixin, DeleteView):
 @login_required
 def private_cabinet(request):
     user = request.user
+    if user.last_name == '' and not user.is_staff:
+        print(user.is_active)
+        return redirect('/accounts/verify')
     ads = Ad.objects.filter(user=user)
     responses = Response.objects.filter(ad__in=ads)
 
@@ -108,6 +111,7 @@ def private_cabinet(request):
             if response.ad.user == user:
                 response.accepted = True
                 response.save()
+                # response.delete()
                 return redirect("private_cabinet")
 
     return render(

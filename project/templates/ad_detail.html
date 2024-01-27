@@ -4,7 +4,7 @@
   <h1>{{ ad.title }}</h1>
   <p>{{ ad.content|safe }}</p>
   <p>[{{ ad.category.name }}]</p>
-   {% if perms.board.update_ad %}
+   {% if perms.board.change_ad %}
     <a href="{% url 'ad_update' ad.id %}">Изменить объявление</a>
     {% endif %}
   <h2>Ответы:</h2>

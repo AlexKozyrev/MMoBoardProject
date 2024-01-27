@@ -14,3 +14,7 @@ class SignUpForm(UserCreationForm):
             "password1",
             "password2",
         )
+
+
+class VerifyForm(forms.Form):
+    code = forms.CharField(required=True)
