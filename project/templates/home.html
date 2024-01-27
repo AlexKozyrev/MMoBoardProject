@@ -1,0 +1,41 @@
+{% extends "flatpages/default.html" %}
+
+{% block content %}
+  <h1>Главная страница</h1>
+  {% if perms.board.add_ad %}
+    <a href="{% url 'ad_create' %}">Повесить объявление на доску</a>
+    {% endif %}
+  {% for ad in ads%}
+    <div class="ad" style="border: 1px solid #000; padding: 10px; margin-bottom: 10px;">
+      <h2>{{ ad.title }} [{{ ad.category.name }}]</h2>
+      <p>{{ ad.content|safe }}</p>
+      <form method="post" action="{% url 'response_create' ad.id %}">
+        {% csrf_token %}
+        <input type="hidden" name="user_id" value="{{ request.user.id }}">
+        <textarea name="content" rows="3" cols="40"></textarea><br>
+        <button type="submit">Отправить</button>
+      </form>
+    </div>
+  {% empty %}
+    <p>Нет рекламных постов.</p>
+  {% endfor %}
+  {% if page_obj.has_previous %}
+       <a href="?page=1">1</a>
+       {% if page_obj.previous_page_number != 1 %}
+           ...
+           <a href="?page={{ page_obj.previous_page_number }}">{{ page_obj.previous_page_number }}</a>
+       {% endif %}
+   {% endif %}
+
+   {# Информация о текущей странице #}
+   {{ page_obj.number }}
+
+   {# Информация о следующих страницах #}
+   {% if page_obj.has_next %}
+       <a href="?page={{ page_obj.next_page_number }}">{{ page_obj.next_page_number }}</a>
+       {% if paginator.num_pages != page_obj.next_page_number %}
+           ...
+           <a href="?page={{ page_obj.paginator.num_pages }}">{{ page_obj.paginator.num_pages }}</a>
+       {% endif %}
+   {% endif %}
+{% endblock %}
