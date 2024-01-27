@@ -1,0 +1,54 @@
+{% extends "flatpages/default.html" %}
+
+{% block content %}
+  <h1>Личный кабинет</h1>
+  {% if perms.board.add_ad %}
+    <a href="{% url 'ad_create' %}">Повесить новое объявление на доску</a>
+    {% endif %}
+  <h2>Отклики на ваши объявления:</h2>
+  <form method="get" action="{% url 'private_cabinet' %}">
+    <input type="hidden" name="action" value="filter">
+    <select name="sort_by">
+      <option value="dateCreation">По постам</option>
+      <option value="content">По новым откликам</option>
+    </select>
+    <button type="submit">Сортировать</button>
+  </form>
+  <table>
+    <tr>
+      <th>Объявление</th>
+      <th>Категория</th>
+      <th>Время создания поста</th>
+      <th>Отклик</th>
+      <th>Время создания отклика</th>
+      <th>Действия</th>
+    </tr>
+    {% for response in responses %}
+      <tr>
+        <td>
+          <a href="{% url 'ad_detail' pk=response.ad.pk %}">{{ response.ad.title }}</a>
+        </td>
+        <td>{{ response.ad.category}}</td>
+        <td>{{ response.ad.dateCreation }}</td>
+        <td>{{ response.content }}</td>
+        <td>{{ response.dateCreation }}</td>
+        {% if response.accepted %}
+          <td>Принято</td>
+        {% else %}
+          <td>
+            <form method="post" action="{% url 'private_cabinet' %}">
+            {% csrf_token %}
+            <input type="hidden" name="response_id" value="{{ response.id }}">
+            <button type="submit" name="action" value="accept">Принять</button>
+            <button type="submit" name="action" value="delete">Удалить</button>
+            </form>
+          </td>
+        {% endif %}
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="5">Нет откликов.</td>
+      </tr>
+    {% endfor %}
+  </table>
+{% endblock %}
