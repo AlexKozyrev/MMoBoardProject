@@ -1,5 +1,5 @@
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
@@ -26,8 +26,7 @@ class AdDetailView(DetailView):
     context_object_name = 'ad'
 
 
-class ResponseCreateView(PermissionRequiredMixin, CreateView):
-    permission_required = ('board.add_responce',)
+class ResponseCreateView(LoginRequiredMixin, CreateView):
     raise_exception = True
     model = Response
     template_name = 'response_create.html'
@@ -66,8 +65,6 @@ class AdUpdate(PermissionRequiredMixin, UpdateView):
 
     def dispatch(self, request, *args, **kwargs):
         obj = self.get_object()
-        if obj.user != request.user:
-            raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
 
 
